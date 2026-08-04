@@ -616,7 +616,8 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   }
 
   // QR Code, escalado para caber no espaço restante e centralizado
-  const tamanhoQr = TAMANHO - margemLateral * 2;
+  const margemInferior = 30;
+  const tamanhoQr = TAMANHO - areaTitulo - margemInferior;
   const xQr = (TAMANHO - tamanhoQr) / 2;
   const yQr = areaTitulo;
   ctx.drawImage(canvasQr, xQr, yQr, tamanhoQr, tamanhoQr);
