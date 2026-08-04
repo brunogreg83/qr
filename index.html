@@ -590,14 +590,14 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
 
   // Legenda "Modo de Uso"
   ctx.fillStyle = "#000000";
-  ctx.font = "700 18px 'JetBrains Mono', monospace";
+  ctx.font = "700 24px 'JetBrains Mono', monospace";
   let legenda = "MODO DE USO", xLeg = centroX, larguraLeg = 0;
-  for (let i = 0; i < legenda.length; i++){ larguraLeg += ctx.measureText(legenda[i]).width + 2.8; }
+  for (let i = 0; i < legenda.length; i++){ larguraLeg += ctx.measureText(legenda[i]).width + 3; }
   xLeg = centroX - larguraLeg / 2;
   ctx.textAlign = "left";
   for (let i = 0; i < legenda.length; i++){
-    ctx.fillText(legenda[i], xLeg, 88);
-    xLeg += ctx.measureText(legenda[i]).width + 2.8;
+    ctx.fillText(legenda[i], xLeg, 92);
+    xLeg += ctx.measureText(legenda[i]).width + 3;
   }
 
   // QR Code, escalado para caber no espaço restante e centralizado
