@@ -146,7 +146,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 .modal-qr .modal-corpo{text-align:center;}
 .etiqueta-qr{text-align:center;margin-bottom:14px;}
 .etiqueta-nome{
-  font-family:'Oswald',sans-serif;font-weight:600;font-size:19px;
+  font-family:'Oswald',sans-serif;font-weight:600;font-size:24px;
   color:var(--azul-950);line-height:1.2;padding:0 6px;
 }
 .etiqueta-linha{display:flex;align-items:center;justify-content:center;gap:7px;margin:9px 0;}
@@ -154,7 +154,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 .etiqueta-linha span:nth-child(1),.etiqueta-linha span:nth-child(3){width:24px;height:1px;background:var(--aco-200);}
 .etiqueta-linha span:nth-child(2){width:5px;height:5px;border-radius:50%;background:var(--amarelo-seg);}
 .etiqueta-legenda{
-  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;
+  font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--azul-600);font-weight:600;
 }
 .moldura-qr{
@@ -562,7 +562,7 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   if (!canvasQr) return;
 
   const margem = 20;
-  const alturaTitulo = 70;
+  const alturaTitulo = 84;
   const canvasFinal = document.createElement("canvas");
   canvasFinal.width = canvasQr.width + margem * 2;
   canvasFinal.height = canvasQr.height + margem * 2 + alturaTitulo;
@@ -577,16 +577,16 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   ctx.fillStyle = "#0A2A3D";
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-  let tamanhoFonte = 22;
+  let tamanhoFonte = 28;
   const larguraMaxNome = canvasFinal.width - margem;
   do {
     ctx.font = "600 " + tamanhoFonte + "px Oswald, sans-serif";
     tamanhoFonte -= 1;
-  } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 12);
-  ctx.fillText(nomeProdutoAtualQr || "", centroX, 28);
+  } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 14);
+  ctx.fillText(nomeProdutoAtualQr || "", centroX, 36);
 
   // Linha decorativa com ponto central
-  const yLinha = 42;
+  const yLinha = 54;
   ctx.strokeStyle = "#C9D6DD";
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -602,13 +602,13 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
 
   // Legenda "Modo de Uso"
   ctx.fillStyle = "#1B6390";
-  ctx.font = "600 12px 'JetBrains Mono', monospace";
+  ctx.font = "600 14px 'JetBrains Mono', monospace";
   let legenda = "MODO DE USO", xLeg = centroX, larguraLeg = 0;
   for (let i = 0; i < legenda.length; i++){ larguraLeg += ctx.measureText(legenda[i]).width + 2.2; }
   xLeg = centroX - larguraLeg / 2;
   ctx.textAlign = "left";
   for (let i = 0; i < legenda.length; i++){
-    ctx.fillText(legenda[i], xLeg, 62);
+    ctx.fillText(legenda[i], xLeg, 74);
     xLeg += ctx.measureText(legenda[i]).width + 2.2;
   }
 
