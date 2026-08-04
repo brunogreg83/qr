@@ -144,6 +144,10 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 
 /* modal QR */
 .modal-qr .modal-corpo{text-align:center;}
+.rotulo-modo-uso{
+  font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:.12em;
+  color:var(--azul-950);font-weight:600;margin-top:4px;
+}
 .moldura-qr{
   display:inline-block;position:relative;padding:26px;background:#fff;margin:10px 0 18px;
 }
@@ -311,6 +315,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
   <div class="modal modal-qr">
     <div class="modal-cabecalho"><h2 id="titulo-modal-qr">QR Code</h2></div>
     <div class="modal-corpo">
+      <div class="rotulo-modo-uso">MODO DE USO</div>
       <div class="moldura-qr">
         <span class="mc2"></span><span class="mc3"></span>
         <div id="qr-canvas-area"></div>
@@ -536,11 +541,30 @@ document.getElementById("btn-fechar-qr").addEventListener("click", function(){
   document.getElementById("overlay-qr").classList.remove("ativo");
 });
 document.getElementById("btn-baixar-qr").addEventListener("click", function(){
-  const canvas = document.querySelector("#qr-canvas-area canvas");
-  if (!canvas) return;
+  const canvasQr = document.querySelector("#qr-canvas-area canvas");
+  if (!canvasQr) return;
+
+  const margem = 20;
+  const alturaTitulo = 40;
+  const canvasFinal = document.createElement("canvas");
+  canvasFinal.width = canvasQr.width + margem * 2;
+  canvasFinal.height = canvasQr.height + margem * 2 + alturaTitulo;
+
+  const ctx = canvasFinal.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvasFinal.width, canvasFinal.height);
+
+  ctx.fillStyle = "#0A2A3D";
+  ctx.font = "700 20px Oswald, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("MODO DE USO", canvasFinal.width / 2, alturaTitulo / 2 + 6);
+
+  ctx.drawImage(canvasQr, margem, alturaTitulo + margem);
+
   const link = document.createElement("a");
   link.download = "qrcode-modo-de-uso.png";
-  link.href = canvas.toDataURL("image/png");
+  link.href = canvasFinal.toDataURL("image/png");
   link.click();
 });
 
