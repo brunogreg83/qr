@@ -547,7 +547,7 @@ document.getElementById("btn-buscar-catalogo").addEventListener("click", functio
       if ((d.categoria || "") === CATEGORIA_EXCLUIDA) return;
       if (!d.nome) return;
       const nomeCurto = d.nome.split("-")[0].trim();
-      const descricao = (d.descricao || "").trim();
+      const descricao = (d.modoDeUso || d.modo_de_uso || d.descricao || d.descrição || "").trim();
       const passosDescricao = descricao ? descricao.split("\n").map(function(s){return s.trim();}).filter(Boolean) : [];
       produtosCatalogoEncontrados.push({
         nome: nomeCurto,
