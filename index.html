@@ -548,7 +548,7 @@ function abrirModalQr(id){
     text: url,
     width: 440,
     height: 440,
-    colorDark: "#0A2A3D",
+    colorDark: "#000000",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.M
   });
@@ -577,42 +577,27 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   const centroX = TAMANHO / 2;
 
   // Nome do produto (reduz a fonte automaticamente se o nome for muito longo)
-  ctx.fillStyle = "#0A2A3D";
+  ctx.fillStyle = "#000000";
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-  let tamanhoFonte = 30;
+  let tamanhoFonte = 36;
   const larguraMaxNome = TAMANHO - margemLateral * 2;
   do {
     ctx.font = "600 " + tamanhoFonte + "px Oswald, sans-serif";
     tamanhoFonte -= 1;
-  } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 14);
-  ctx.fillText(nomeProdutoAtualQr || "", centroX, 46);
-
-  // Linha decorativa com ponto central
-  const yLinha = 70;
-  ctx.strokeStyle = "#C9D6DD";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(centroX - 40, yLinha);
-  ctx.lineTo(centroX - 8, yLinha);
-  ctx.moveTo(centroX + 8, yLinha);
-  ctx.lineTo(centroX + 40, yLinha);
-  ctx.stroke();
-  ctx.fillStyle = "#F2A93B";
-  ctx.beginPath();
-  ctx.arc(centroX, yLinha, 2.5, 0, Math.PI * 2);
-  ctx.fill();
+  } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 16);
+  ctx.fillText(nomeProdutoAtualQr || "", centroX, 48);
 
   // Legenda "Modo de Uso"
-  ctx.fillStyle = "#1B6390";
-  ctx.font = "600 14px 'JetBrains Mono', monospace";
+  ctx.fillStyle = "#000000";
+  ctx.font = "700 18px 'JetBrains Mono', monospace";
   let legenda = "MODO DE USO", xLeg = centroX, larguraLeg = 0;
-  for (let i = 0; i < legenda.length; i++){ larguraLeg += ctx.measureText(legenda[i]).width + 2.2; }
+  for (let i = 0; i < legenda.length; i++){ larguraLeg += ctx.measureText(legenda[i]).width + 2.8; }
   xLeg = centroX - larguraLeg / 2;
   ctx.textAlign = "left";
   for (let i = 0; i < legenda.length; i++){
-    ctx.fillText(legenda[i], xLeg, 98);
-    xLeg += ctx.measureText(legenda[i]).width + 2.2;
+    ctx.fillText(legenda[i], xLeg, 88);
+    xLeg += ctx.measureText(legenda[i]).width + 2.8;
   }
 
   // QR Code, escalado para caber no espaço restante e centralizado
