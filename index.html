@@ -357,6 +357,7 @@ const params = new URLSearchParams(window.location.search);
 const idProduto = params.get("id");
 
 if (idProduto) {
+  document.getElementById("tela-login").style.display = "none";
   document.getElementById("app-publico").style.display = "block";
   carregarPlacaPublica(idProduto);
 } else {
