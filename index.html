@@ -87,6 +87,10 @@ header.topo .acoes-topo{display:flex;gap:10px;align-items:center;}
   background:var(--amarelo-seg);color:var(--azul-950);font-weight:700;
   padding:10px 18px;border-radius:var(--radius);font-size:13px;text-transform:uppercase;letter-spacing:.05em;
 }
+.btn-importar{
+  background:transparent;color:#fff;font-weight:600;border:1px solid rgba(255,255,255,.35);
+  padding:9px 16px;border-radius:var(--radius);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;
+}
 
 main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 .barra-busca{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
@@ -137,6 +141,15 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 }
 .campo-form textarea{resize:vertical;min-height:80px;font-family:'Inter',sans-serif;}
 .dica-campo{font-size:11.5px;color:#6B7C85;margin-top:4px;}
+.item-import{
+  display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--aco-100);font-size:13.5px;
+}
+.item-import input{width:auto;}
+.item-import .cat-import{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--azul-600);
+  text-transform:uppercase;margin-left:auto;
+}
+.item-import.ja-existe{opacity:.5;}
 .acoes-modal{display:flex;gap:10px;margin-top:20px;}
 .acoes-modal button{flex:1;padding:12px;border-radius:var(--radius);font-weight:700;text-transform:uppercase;font-size:12.5px;letter-spacing:.04em;}
 .btn-cancelar{background:var(--aco-100);color:var(--azul-950);}
@@ -144,18 +157,14 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 
 /* modal QR */
 .modal-qr .modal-corpo{text-align:center;}
-.etiqueta-qr{text-align:center;margin-bottom:14px;}
+.etiqueta-qr{text-align:center;margin-bottom:16px;}
 .etiqueta-nome{
-  font-family:'Oswald',sans-serif;font-weight:600;font-size:24px;
-  color:var(--azul-950);line-height:1.2;padding:0 6px;
+  font-family:'Oswald',sans-serif;font-weight:600;font-size:28px;
+  color:#000000;line-height:1.2;padding:0 6px;
 }
-.etiqueta-linha{display:flex;align-items:center;justify-content:center;gap:7px;margin:9px 0;}
-.etiqueta-linha span{display:block;}
-.etiqueta-linha span:nth-child(1),.etiqueta-linha span:nth-child(3){width:24px;height:1px;background:var(--aco-200);}
-.etiqueta-linha span:nth-child(2){width:5px;height:5px;border-radius:50%;background:var(--amarelo-seg);}
 .etiqueta-legenda{
-  font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--azul-600);font-weight:600;
+  font-family:'JetBrains Mono',monospace;font-size:17px;letter-spacing:.14em;
+  text-transform:uppercase;color:#000000;font-weight:700;margin-top:10px;
 }
 .moldura-qr{
   display:inline-block;position:relative;padding:26px;background:#fff;margin:10px 0 18px;
@@ -246,6 +255,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
       <h1>Gerador de QR · Modo de Uso</h1>
     </div>
     <div class="acoes-topo">
+      <button class="btn-importar" id="btn-importar-catalogo">Importar do Catálogo</button>
       <button class="btn-novo" id="btn-novo-produto">+ Novo produto</button>
       <button class="btn-sair" id="btn-sair">Sair</button>
     </div>
@@ -320,6 +330,29 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
   </div>
 </div>
 
+<!-- ============ MODAL IMPORTAR DO CATÁLOGO ============ -->
+<div class="overlay" id="overlay-importar">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-cabecalho"><h2>Importar do Catálogo</h2></div>
+    <div class="modal-corpo">
+      <div class="campo-form">
+        <label>Nome da coleção no Firestore do Catálogo</label>
+        <input type="text" id="import-colecao" value="produtos">
+        <div class="dica-campo">Se a busca não trouxer nada, tente outro nome (ex: "catalogo", "products").</div>
+      </div>
+      <div class="acoes-modal" style="margin-top:0;margin-bottom:16px;">
+        <button type="button" class="btn-cancelar" id="btn-buscar-catalogo" style="flex:none;padding:10px 18px;">Buscar produtos</button>
+      </div>
+      <div id="import-status" class="dica-campo"></div>
+      <div id="import-lista" style="max-height:320px;overflow-y:auto;"></div>
+      <div class="acoes-modal">
+        <button type="button" class="btn-cancelar" id="btn-cancelar-importar">Fechar</button>
+        <button type="button" class="btn-salvar" id="btn-confirmar-importar" style="display:none;">Importar selecionados</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODAL QR ============ -->
 <div class="overlay" id="overlay-qr">
   <div class="modal modal-qr">
@@ -327,8 +360,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
     <div class="modal-corpo">
       <div class="etiqueta-qr">
         <div class="etiqueta-nome" id="etiqueta-nome">Nome do produto</div>
-        <div class="etiqueta-linha"><span></span><span></span><span></span></div>
-        <div class="etiqueta-legenda">Modo de Uso</div>
+        <div class="etiqueta-legenda">MODO DE USO</div>
       </div>
       <div class="moldura-qr">
         <span class="mc2"></span><span class="mc3"></span>
@@ -365,6 +397,19 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const COLECAO = "produtos_modo_uso";
+
+// App Firebase secundário: projeto do Gerador de Catálogo (somente leitura, para importação)
+const catalogoConfig = {
+  apiKey: "AIzaSyC8oIu9BJBmM2QMQHPKqIEegYtUny1uDJE",
+  authDomain: "catalogo-68e13.firebaseapp.com",
+  projectId: "catalogo-68e13",
+  storageBucket: "catalogo-68e13.firebasestorage.app",
+  messagingSenderId: "946056802788",
+  appId: "1:946056802788:web:a9d30721fb48a7a85f57f1"
+};
+const appCatalogo = firebase.initializeApp(catalogoConfig, "catalogo");
+const dbCatalogo = appCatalogo.firestore();
+const CATEGORIA_EXCLUIDA = "Descartáveis";
 
 let produtosCache = [];
 let qrAtualCanvas = null;
@@ -465,6 +510,100 @@ function renderizarGrade(){
 
 document.getElementById("busca-produto").addEventListener("input", renderizarGrade);
 document.getElementById("filtro-categoria").addEventListener("change", renderizarGrade);
+
+// ---------------------------------------------------------------
+// IMPORTAR DO GERADOR DE CATÁLOGO
+// ---------------------------------------------------------------
+let produtosCatalogoEncontrados = [];
+
+document.getElementById("btn-importar-catalogo").addEventListener("click", function(){
+  document.getElementById("import-status").textContent = "";
+  document.getElementById("import-lista").innerHTML = "";
+  document.getElementById("btn-confirmar-importar").style.display = "none";
+  document.getElementById("overlay-importar").classList.add("ativo");
+});
+document.getElementById("btn-cancelar-importar").addEventListener("click", function(){
+  document.getElementById("overlay-importar").classList.remove("ativo");
+});
+
+document.getElementById("btn-buscar-catalogo").addEventListener("click", function(){
+  const colecao = document.getElementById("import-colecao").value.trim();
+  const statusEl = document.getElementById("import-status");
+  const listaEl = document.getElementById("import-lista");
+  statusEl.textContent = "Buscando...";
+  listaEl.innerHTML = "";
+  document.getElementById("btn-confirmar-importar").style.display = "none";
+
+  dbCatalogo.collection(colecao).get().then(function(snap){
+    if (snap.empty) {
+      statusEl.textContent = 'Nenhum produto encontrado na coleção "' + colecao + '". Tente outro nome.';
+      return;
+    }
+    const nomesJaImportados = produtosCache.map(function(p){ return (p.nome || "").toLowerCase().trim(); });
+
+    produtosCatalogoEncontrados = [];
+    snap.forEach(function(doc){
+      const d = doc.data();
+      if ((d.categoria || "") === CATEGORIA_EXCLUIDA) return;
+      if (!d.nome) return;
+      const nomeCurto = d.nome.split("-")[0].trim();
+      const descricao = (d.descricao || "").trim();
+      const passosDescricao = descricao ? descricao.split("\n").map(function(s){return s.trim();}).filter(Boolean) : [];
+      produtosCatalogoEncontrados.push({
+        nome: nomeCurto,
+        categoria: d.categoria || "",
+        passos: passosDescricao
+      });
+    });
+
+    if (!produtosCatalogoEncontrados.length) {
+      statusEl.textContent = "Nenhum produto elegível encontrado (fora da categoria Descartáveis).";
+      return;
+    }
+
+    statusEl.textContent = produtosCatalogoEncontrados.length + " produto(s) encontrado(s). Desmarcados os que já existem aqui.";
+    listaEl.innerHTML = "";
+    produtosCatalogoEncontrados.forEach(function(p, i){
+      const jaExiste = nomesJaImportados.indexOf(p.nome.toLowerCase().trim()) !== -1;
+      const linha = document.createElement("label");
+      linha.className = "item-import" + (jaExiste ? " ja-existe" : "");
+      linha.innerHTML =
+        '<input type="checkbox" data-idx="' + i + '"' + (jaExiste ? "" : " checked") + '>' +
+        '<span>' + escapeHtml(p.nome) + '</span>' +
+        '<span class="cat-import">' + escapeHtml(p.categoria) + (jaExiste ? " · já existe" : "") + '</span>';
+      listaEl.appendChild(linha);
+    });
+    document.getElementById("btn-confirmar-importar").style.display = "block";
+  }).catch(function(err){
+    statusEl.textContent = "Erro ao buscar: " + err.message;
+  });
+});
+
+document.getElementById("btn-confirmar-importar").addEventListener("click", function(){
+  const checkboxes = document.querySelectorAll('#import-lista input[type="checkbox"]:checked');
+  if (!checkboxes.length) return;
+  const statusEl = document.getElementById("import-status");
+  statusEl.textContent = "Importando...";
+
+  const lote = [];
+  checkboxes.forEach(function(cb){
+    const p = produtosCatalogoEncontrados[Number(cb.dataset.idx)];
+    lote.push(db.collection(COLECAO).add({
+      nome: p.nome,
+      categoria: p.categoria,
+      diluicao: "",
+      passos: p.passos || [],
+      cuidados: ""
+    }));
+  });
+
+  Promise.all(lote).then(function(){
+    statusEl.textContent = lote.length + " produto(s) importado(s) com o modo de uso preenchido a partir da descrição do catálogo.";
+    document.getElementById("btn-confirmar-importar").style.display = "none";
+  }).catch(function(err){
+    statusEl.textContent = "Erro ao importar: " + err.message;
+  });
+});
 
 // ---------------------------------------------------------------
 // MODAL PRODUTO (criar / editar)
@@ -650,7 +789,7 @@ function carregarPlacaPublica(id){
           '<ul class="lista-passos">' + passosHtml + '</ul>' +
           (p.cuidados ? '<div class="bloco-cuidados"><div class="titulo-secao">Cuidados e EPI</div>' + escapeHtml(p.cuidados) + '</div>' : '') +
         '</div>' +
-        '<div class="placa-rodape">Consulte sempre a ficha técnica do produto</div>' +
+        '<div class="placa-rodape">AB Chemicals · (43) 98871-2001</div>' +
       '</div>';
   }).catch(function(err){
     document.getElementById("placa-conteudo").innerHTML =
