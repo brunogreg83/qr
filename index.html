@@ -541,9 +541,11 @@ document.getElementById("btn-buscar-catalogo").addEventListener("click", functio
     }
     const nomesJaImportados = produtosCache.map(function(p){ return (p.nome || "").toLowerCase().trim(); });
 
+    let camposExemplo = "";
     produtosCatalogoEncontrados = [];
     snap.forEach(function(doc){
       const d = doc.data();
+      if (!camposExemplo) camposExemplo = Object.keys(d).join(", ");
       if ((d.categoria || "") === CATEGORIA_EXCLUIDA) return;
       if (!d.nome) return;
       const nomeCurto = d.nome.split("-")[0].trim();
@@ -561,7 +563,8 @@ document.getElementById("btn-buscar-catalogo").addEventListener("click", functio
       return;
     }
 
-    statusEl.textContent = produtosCatalogoEncontrados.length + " produto(s) encontrado(s). Desmarcados os que já existem aqui.";
+    statusEl.innerHTML = produtosCatalogoEncontrados.length + " produto(s) encontrado(s). Desmarcados os que já existem aqui." +
+      '<br><span style="color:#B3402C;">Campos disponíveis no catálogo: ' + escapeHtml(camposExemplo) + '</span>';
     listaEl.innerHTML = "";
     produtosCatalogoEncontrados.forEach(function(p, i){
       const jaExiste = nomesJaImportados.indexOf(p.nome.toLowerCase().trim()) !== -1;
