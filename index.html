@@ -564,7 +564,7 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
 
   const TAMANHO = 500;
   const margemLateral = 30;
-  const areaTitulo = 120;
+  const areaTitulo = 132;
 
   const canvasFinal = document.createElement("canvas");
   canvasFinal.width = TAMANHO;
@@ -580,23 +580,23 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   ctx.fillStyle = "#000000";
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-  let tamanhoFonte = 36;
+  let tamanhoFonte = 42;
   const larguraMaxNome = TAMANHO - margemLateral * 2;
   do {
     ctx.font = "600 " + tamanhoFonte + "px Oswald, sans-serif";
     tamanhoFonte -= 1;
-  } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 16);
-  ctx.fillText(nomeProdutoAtualQr || "", centroX, 48);
+  } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 18);
+  ctx.fillText(nomeProdutoAtualQr || "", centroX, 52);
 
   // Legenda "Modo de Uso"
   ctx.fillStyle = "#000000";
-  ctx.font = "700 24px 'JetBrains Mono', monospace";
+  ctx.font = "700 28px 'JetBrains Mono', monospace";
   let legenda = "MODO DE USO", xLeg = centroX, larguraLeg = 0;
   for (let i = 0; i < legenda.length; i++){ larguraLeg += ctx.measureText(legenda[i]).width + 3; }
   xLeg = centroX - larguraLeg / 2;
   ctx.textAlign = "left";
   for (let i = 0; i < legenda.length; i++){
-    ctx.fillText(legenda[i], xLeg, 92);
+    ctx.fillText(legenda[i], xLeg, 100);
     xLeg += ctx.measureText(legenda[i]).width + 3;
   }
 
@@ -608,7 +608,12 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   ctx.drawImage(canvasQr, xQr, yQr, tamanhoQr, tamanhoQr);
 
   const link = document.createElement("a");
-  link.download = "qrcode-modo-de-uso.png";
+  const nomeArquivo = (nomeProdutoAtualQr || "produto")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+  link.download = nomeArquivo + ".png";
   link.href = canvasFinal.toDataURL("image/png");
   link.click();
 });
