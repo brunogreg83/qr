@@ -168,6 +168,7 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 .moldura-qr .mc2{top:0;right:0;border-top:3px solid var(--azul-950);border-right:3px solid var(--azul-950);}
 .moldura-qr .mc3{bottom:0;left:0;border-bottom:3px solid var(--azul-950);border-left:3px solid var(--azul-950);}
 #qr-canvas-area{display:inline-block;}
+#qr-canvas-area canvas,#qr-canvas-area img{width:200px!important;height:200px!important;}
 .link-qr{
   font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--azul-600);
   word-break:break-all;background:var(--aco-100);padding:8px;border-radius:var(--radius);margin-bottom:16px;
@@ -545,8 +546,8 @@ function abrirModalQr(id){
   area.innerHTML = "";
   new QRCode(area, {
     text: url,
-    width: 200,
-    height: 200,
+    width: 440,
+    height: 440,
     colorDark: "#0A2A3D",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.M
@@ -561,32 +562,34 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   const canvasQr = document.querySelector("#qr-canvas-area canvas");
   if (!canvasQr) return;
 
-  const margem = 20;
-  const alturaTitulo = 84;
+  const TAMANHO = 500;
+  const margemLateral = 30;
+  const areaTitulo = 120;
+
   const canvasFinal = document.createElement("canvas");
-  canvasFinal.width = canvasQr.width + margem * 2;
-  canvasFinal.height = canvasQr.height + margem * 2 + alturaTitulo;
+  canvasFinal.width = TAMANHO;
+  canvasFinal.height = TAMANHO;
 
   const ctx = canvasFinal.getContext("2d");
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, canvasFinal.width, canvasFinal.height);
+  ctx.fillRect(0, 0, TAMANHO, TAMANHO);
 
-  const centroX = canvasFinal.width / 2;
+  const centroX = TAMANHO / 2;
 
   // Nome do produto (reduz a fonte automaticamente se o nome for muito longo)
   ctx.fillStyle = "#0A2A3D";
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-  let tamanhoFonte = 28;
-  const larguraMaxNome = canvasFinal.width - margem;
+  let tamanhoFonte = 30;
+  const larguraMaxNome = TAMANHO - margemLateral * 2;
   do {
     ctx.font = "600 " + tamanhoFonte + "px Oswald, sans-serif";
     tamanhoFonte -= 1;
   } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 14);
-  ctx.fillText(nomeProdutoAtualQr || "", centroX, 36);
+  ctx.fillText(nomeProdutoAtualQr || "", centroX, 46);
 
   // Linha decorativa com ponto central
-  const yLinha = 54;
+  const yLinha = 70;
   ctx.strokeStyle = "#C9D6DD";
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -608,11 +611,15 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   xLeg = centroX - larguraLeg / 2;
   ctx.textAlign = "left";
   for (let i = 0; i < legenda.length; i++){
-    ctx.fillText(legenda[i], xLeg, 74);
+    ctx.fillText(legenda[i], xLeg, 98);
     xLeg += ctx.measureText(legenda[i]).width + 2.2;
   }
 
-  ctx.drawImage(canvasQr, margem, alturaTitulo + margem);
+  // QR Code, escalado para caber no espaço restante e centralizado
+  const tamanhoQr = TAMANHO - margemLateral * 2;
+  const xQr = (TAMANHO - tamanhoQr) / 2;
+  const yQr = areaTitulo;
+  ctx.drawImage(canvasQr, xQr, yQr, tamanhoQr, tamanhoQr);
 
   const link = document.createElement("a");
   link.download = "qrcode-modo-de-uso.png";
