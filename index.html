@@ -144,10 +144,18 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
 
 /* modal QR */
 .modal-qr .modal-corpo{text-align:center;}
-.rotulo-modo-uso{
-  font-family:'Oswald',sans-serif;font-size:15px;
-  color:var(--azul-950);font-weight:600;margin-top:4px;
-  white-space:nowrap;text-align:justify;width:100%;display:inline-block;
+.etiqueta-qr{text-align:center;margin-bottom:14px;}
+.etiqueta-nome{
+  font-family:'Oswald',sans-serif;font-weight:600;font-size:19px;
+  color:var(--azul-950);line-height:1.2;padding:0 6px;
+}
+.etiqueta-linha{display:flex;align-items:center;justify-content:center;gap:7px;margin:9px 0;}
+.etiqueta-linha span{display:block;}
+.etiqueta-linha span:nth-child(1),.etiqueta-linha span:nth-child(3){width:24px;height:1px;background:var(--aco-200);}
+.etiqueta-linha span:nth-child(2){width:5px;height:5px;border-radius:50%;background:var(--amarelo-seg);}
+.etiqueta-legenda{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--azul-600);font-weight:600;
 }
 .moldura-qr{
   display:inline-block;position:relative;padding:26px;background:#fff;margin:10px 0 18px;
@@ -316,7 +324,11 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
   <div class="modal modal-qr">
     <div class="modal-cabecalho"><h2 id="titulo-modal-qr">QR Code</h2></div>
     <div class="modal-corpo">
-      <div class="rotulo-modo-uso" id="rotulo-modo-uso">MODO DE USO</div>
+      <div class="etiqueta-qr">
+        <div class="etiqueta-nome" id="etiqueta-nome">Nome do produto</div>
+        <div class="etiqueta-linha"><span></span><span></span><span></span></div>
+        <div class="etiqueta-legenda">Modo de Uso</div>
+      </div>
       <div class="moldura-qr">
         <span class="mc2"></span><span class="mc3"></span>
         <div id="qr-canvas-area"></div>
@@ -520,15 +532,6 @@ function excluirProduto(id){
 // ---------------------------------------------------------------
 let nomeProdutoAtualQr = "";
 
-function ajustarLarguraTexto(elemento, larguraAlvo){
-  elemento.style.letterSpacing = "0px";
-  const larguraTexto = elemento.getBoundingClientRect().width;
-  const numLacunas = elemento.textContent.trim().length - 1;
-  if (numLacunas <= 0) return;
-  const extra = (larguraAlvo - larguraTexto) / numLacunas;
-  elemento.style.letterSpacing = extra + "px";
-}
-
 function abrirModalQr(id){
   const p = produtosCache.find(function(x){ return x.id === id; });
   const url = window.location.origin + window.location.pathname + "?id=" + id;
@@ -536,9 +539,7 @@ function abrirModalQr(id){
   nomeProdutoAtualQr = p.nome;
   document.getElementById("titulo-modal-qr").textContent = p.nome;
   document.getElementById("link-qr-texto").textContent = url;
-
-  const rotulo = document.getElementById("rotulo-modo-uso");
-  rotulo.textContent = p.nome.toUpperCase() + " MODO DE USO";
+  document.getElementById("etiqueta-nome").textContent = p.nome;
 
   const area = document.getElementById("qr-canvas-area");
   area.innerHTML = "";
@@ -552,9 +553,6 @@ function abrirModalQr(id){
   });
 
   document.getElementById("overlay-qr").classList.add("ativo");
-
-  const larguraCaixa = document.querySelector(".moldura-qr").getBoundingClientRect().width;
-  ajustarLarguraTexto(rotulo, larguraCaixa);
 }
 document.getElementById("btn-fechar-qr").addEventListener("click", function(){
   document.getElementById("overlay-qr").classList.remove("ativo");
@@ -564,7 +562,7 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   if (!canvasQr) return;
 
   const margem = 20;
-  const alturaTitulo = 40;
+  const alturaTitulo = 70;
   const canvasFinal = document.createElement("canvas");
   canvasFinal.width = canvasQr.width + margem * 2;
   canvasFinal.height = canvasQr.height + margem * 2 + alturaTitulo;
@@ -573,20 +571,45 @@ document.getElementById("btn-baixar-qr").addEventListener("click", function(){
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvasFinal.width, canvasFinal.height);
 
-  const texto = (nomeProdutoAtualQr || "").toUpperCase() + " MODO DE USO";
+  const centroX = canvasFinal.width / 2;
+
+  // Nome do produto (reduz a fonte automaticamente se o nome for muito longo)
   ctx.fillStyle = "#0A2A3D";
-  ctx.font = "700 20px Oswald, sans-serif";
-  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  let tamanhoFonte = 22;
+  const larguraMaxNome = canvasFinal.width - margem;
+  do {
+    ctx.font = "600 " + tamanhoFonte + "px Oswald, sans-serif";
+    tamanhoFonte -= 1;
+  } while (ctx.measureText(nomeProdutoAtualQr || "").width > larguraMaxNome && tamanhoFonte > 12);
+  ctx.fillText(nomeProdutoAtualQr || "", centroX, 28);
 
-  const larguraAlvo = canvasFinal.width - margem * 2;
-  const larguraTexto = ctx.measureText(texto).width;
-  const numLacunas = texto.length - 1;
-  const espacoExtra = numLacunas > 0 ? (larguraAlvo - larguraTexto) / numLacunas : 0;
+  // Linha decorativa com ponto central
+  const yLinha = 42;
+  ctx.strokeStyle = "#C9D6DD";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(centroX - 40, yLinha);
+  ctx.lineTo(centroX - 8, yLinha);
+  ctx.moveTo(centroX + 8, yLinha);
+  ctx.lineTo(centroX + 40, yLinha);
+  ctx.stroke();
+  ctx.fillStyle = "#F2A93B";
+  ctx.beginPath();
+  ctx.arc(centroX, yLinha, 2.5, 0, Math.PI * 2);
+  ctx.fill();
 
-  let x = margem;
-  for (let i = 0; i < texto.length; i++){
-    ctx.fillText(texto[i], x, alturaTitulo / 2 + 6);
-    x += ctx.measureText(texto[i]).width + espacoExtra;
+  // Legenda "Modo de Uso"
+  ctx.fillStyle = "#1B6390";
+  ctx.font = "600 12px 'JetBrains Mono', monospace";
+  let legenda = "MODO DE USO", xLeg = centroX, larguraLeg = 0;
+  for (let i = 0; i < legenda.length; i++){ larguraLeg += ctx.measureText(legenda[i]).width + 2.2; }
+  xLeg = centroX - larguraLeg / 2;
+  ctx.textAlign = "left";
+  for (let i = 0; i < legenda.length; i++){
+    ctx.fillText(legenda[i], xLeg, 62);
+    xLeg += ctx.measureText(legenda[i]).width + 2.2;
   }
 
   ctx.drawImage(canvasQr, margem, alturaTitulo + margem);
