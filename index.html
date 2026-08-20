@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -182,6 +183,18 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
   font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--azul-600);
   word-break:break-all;background:var(--aco-100);padding:8px;border-radius:var(--radius);margin-bottom:16px;
 }
+.documentos-produto{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 22px;
+}
+.btn-documento{
+  display:flex;align-items:center;justify-content:center;min-height:46px;padding:10px 12px;
+  border-radius:var(--radius);background:var(--azul-950);color:#fff;text-decoration:none;
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+}
+.btn-documento.secundario{background:var(--azul-600);}
+.btn-documento.desabilitado{background:#DCE3E7;color:#71818A;pointer-events:none;}
+@media(max-width:520px){.documentos-produto{grid-template-columns:1fr;}}
+
 
 /* ---------- PÁGINA PÚBLICA (PLACA) ---------- */
 #app-publico{display:none;min-height:100vh;padding:20px;}
@@ -321,6 +334,16 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
           <label>Cuidados / EPI (opcional)</label>
           <textarea id="produto-cuidados" placeholder="Ex: Use luvas e óculos de proteção. Não misture com outros produtos químicos."></textarea>
         </div>
+        <div class="campo-form">
+          <label>Rótulo do produto (PDF ou imagem)</label>
+          <input type="file" id="produto-rotulo-arquivo" accept=".pdf,.png,.jpg,.jpeg,.webp">
+          <div class="dica-campo" id="rotulo-atual"></div>
+        </div>
+        <div class="campo-form">
+          <label>Ficha técnica (PDF)</label>
+          <input type="file" id="produto-ficha-arquivo" accept=".pdf">
+          <div class="dica-campo" id="ficha-atual"></div>
+        </div>
         <div class="acoes-modal">
           <button type="button" class="btn-cancelar" id="btn-cancelar-produto">Cancelar</button>
           <button type="submit" class="btn-salvar">Salvar produto</button>
@@ -396,6 +419,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 const COLECAO = "produtos_modo_uso";
 
 // App Firebase secundário: projeto do Gerador de Catálogo (somente leitura, para importação)
@@ -618,6 +642,8 @@ function abrirModalProduto(id){
   const form = document.getElementById("form-produto");
   form.reset();
   document.getElementById("produto-id").value = "";
+  document.getElementById("rotulo-atual").textContent = "";
+  document.getElementById("ficha-atual").textContent = "";
 
   if (id) {
     const p = produtosCache.find(function(x){ return x.id === id; });
@@ -628,6 +654,14 @@ function abrirModalProduto(id){
     document.getElementById("produto-diluicao").value = p.diluicao || "";
     document.getElementById("produto-passos").value = (p.passos || []).join("\n");
     document.getElementById("produto-cuidados").value = p.cuidados || "";
+    if (p.rotuloUrl) {
+      document.getElementById("rotulo-atual").innerHTML =
+        'Arquivo atual: <a href="' + escapeAttr(p.rotuloUrl) + '" target="_blank" rel="noopener">abrir rótulo</a>';
+    }
+    if (p.fichaTecnicaUrl) {
+      document.getElementById("ficha-atual").innerHTML =
+        'Arquivo atual: <a href="' + escapeAttr(p.fichaTecnicaUrl) + '" target="_blank" rel="noopener">abrir ficha técnica</a>';
+    }
   } else {
     document.getElementById("titulo-modal-produto").textContent = "Novo produto";
   }
@@ -637,11 +671,11 @@ function fecharModalProduto(){
   document.getElementById("overlay-produto").classList.remove("ativo");
 }
 
-document.getElementById("form-produto").addEventListener("submit", function(e){
+document.getElementById("form-produto").addEventListener("submit", async function(e){
   e.preventDefault();
   const id = document.getElementById("produto-id").value;
-  const passos = document.getElementById("produto-passos").value
-    .split("\n").map(function(s){return s.trim();}).filter(Boolean);
+  const passos = document.getElementById("produto-passos").value.split("\n")
+    .map(function(s){return s.trim();}).filter(Boolean);
 
   const dados = {
     nome: document.getElementById("produto-nome").value.trim(),
@@ -651,13 +685,43 @@ document.getElementById("form-produto").addEventListener("submit", function(e){
     cuidados: document.getElementById("produto-cuidados").value.trim()
   };
 
-  const promessa = id
-    ? db.collection(COLECAO).doc(id).update(dados)
-    : db.collection(COLECAO).add(dados);
+  const arquivoRotulo = document.getElementById("produto-rotulo-arquivo").files[0];
+  const arquivoFicha = document.getElementById("produto-ficha-arquivo").files[0];
 
-  promessa.then(fecharModalProduto).catch(function(err){
-    alert("Erro ao salvar: " + err.message);
-  });
+  try {
+    let docRef;
+    if (id) {
+      docRef = db.collection(COLECAO).doc(id);
+      const atual = produtosCache.find(function(x){ return x.id === id; });
+      if (atual && atual.rotuloUrl) dados.rotuloUrl = atual.rotuloUrl;
+      if (atual && atual.fichaTecnicaUrl) dados.fichaTecnicaUrl = atual.fichaTecnicaUrl;
+      await docRef.set(dados, {merge:true});
+    } else {
+      docRef = await db.collection(COLECAO).add(dados);
+    }
+
+    const idFinal = docRef.id;
+
+    if (arquivoRotulo) {
+      const ref = storage.ref().child("documentos_produtos/" + idFinal + "/rotulo_" + sanitizarNomeArquivo(arquivoRotulo.name));
+      const snap = await ref.put(arquivoRotulo);
+      dados.rotuloUrl = await snap.ref.getDownloadURL();
+    }
+
+    if (arquivoFicha) {
+      const ref = storage.ref().child("documentos_produtos/" + idFinal + "/ficha_tecnica_" + sanitizarNomeArquivo(arquivoFicha.name));
+      const snap = await ref.put(arquivoFicha);
+      dados.fichaTecnicaUrl = await snap.ref.getDownloadURL();
+    }
+
+    if (arquivoRotulo || arquivoFicha) {
+      await db.collection(COLECAO).doc(idFinal).set(dados, {merge:true});
+    }
+
+    fecharModalProduto();
+  } catch (err) {
+    alert("Erro ao salvar produto ou enviar os arquivos: " + err.message);
+  }
 });
 
 function excluirProduto(id){
@@ -665,6 +729,15 @@ function excluirProduto(id){
   if (confirm('Excluir "' + p.nome + '"? Essa ação não pode ser desfeita.')) {
     db.collection(COLECAO).doc(id).delete();
   }
+}
+
+function sanitizarNomeArquivo(nome){
+  return (nome || "arquivo").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-");
+}
+function escapeAttr(str){
+  return String(str || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;")
+    .replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
 // ---------------------------------------------------------------
