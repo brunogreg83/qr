@@ -673,54 +673,88 @@ function fecharModalProduto(){
 
 document.getElementById("form-produto").addEventListener("submit", async function(e){
   e.preventDefault();
-  const id = document.getElementById("produto-id").value;
-  const passos = document.getElementById("produto-passos").value.split("\n")
-    .map(function(s){return s.trim();}).filter(Boolean);
 
-  const dados = {
-    nome: document.getElementById("produto-nome").value.trim(),
-    categoria: document.getElementById("produto-categoria").value,
-    diluicao: document.getElementById("produto-diluicao").value.trim(),
-    passos: passos,
-    cuidados: document.getElementById("produto-cuidados").value.trim()
-  };
-
-  const arquivoRotulo = document.getElementById("produto-rotulo-arquivo").files[0];
-  const arquivoFicha = document.getElementById("produto-ficha-arquivo").files[0];
+  const btnSalvar = document.querySelector("#form-produto .btn-salvar");
+  const textoOriginal = btnSalvar.textContent;
+  btnSalvar.disabled = true;
+  btnSalvar.textContent = "Salvando...";
 
   try {
+    const id = document.getElementById("produto-id").value.trim();
+    const passos = document.getElementById("produto-passos").value
+      .split("\n").map(function(s){ return s.trim(); }).filter(Boolean);
+
+    const dados = {
+      nome: document.getElementById("produto-nome").value.trim(),
+      categoria: document.getElementById("produto-categoria").value,
+      diluicao: document.getElementById("produto-diluicao").value.trim(),
+      passos: passos,
+      cuidados: document.getElementById("produto-cuidados").value.trim()
+    };
+
+    if (!dados.nome || !dados.categoria || !dados.passos.length) {
+      throw new Error("Preencha nome, categoria e modo de uso.");
+    }
+
+    const arquivoRotulo = document.getElementById("produto-rotulo-arquivo").files[0] || null;
+    const arquivoFicha = document.getElementById("produto-ficha-arquivo").files[0] || null;
+
     let docRef;
+    let dadosAtuais = {};
+
     if (id) {
       docRef = db.collection(COLECAO).doc(id);
       const atual = produtosCache.find(function(x){ return x.id === id; });
-      if (atual && atual.rotuloUrl) dados.rotuloUrl = atual.rotuloUrl;
-      if (atual && atual.fichaTecnicaUrl) dados.fichaTecnicaUrl = atual.fichaTecnicaUrl;
-      await docRef.set(dados, {merge:true});
+      if (atual) dadosAtuais = atual;
     } else {
-      docRef = await db.collection(COLECAO).add(dados);
+      // Cria o documento somente depois que os dados básicos estiverem validados.
+      docRef = db.collection(COLECAO).doc();
     }
+
+    // Mantém os arquivos já cadastrados quando estiver editando.
+    if (dadosAtuais.rotuloUrl) dados.rotuloUrl = dadosAtuais.rotuloUrl;
+    if (dadosAtuais.fichaTecnicaUrl) dados.fichaTecnicaUrl = dadosAtuais.fichaTecnicaUrl;
+
+    // Salva o produto primeiro, garantindo que exista um ID para os arquivos.
+    await docRef.set(dados, { merge: true });
 
     const idFinal = docRef.id;
 
+    // Upload do rótulo.
     if (arquivoRotulo) {
-      const ref = storage.ref().child("documentos_produtos/" + idFinal + "/rotulo_" + sanitizarNomeArquivo(arquivoRotulo.name));
-      const snap = await ref.put(arquivoRotulo);
-      dados.rotuloUrl = await snap.ref.getDownloadURL();
+      if (typeof storage === "undefined" || !storage) {
+        throw new Error("Firebase Storage não está disponível. Verifique a configuração do Firebase.");
+      }
+      const refRotulo = storage.ref().child(
+        "documentos_produtos/" + idFinal + "/rotulo_" + sanitizarNomeArquivo(arquivoRotulo.name)
+      );
+      const snapRotulo = await refRotulo.put(arquivoRotulo);
+      dados.rotuloUrl = await snapRotulo.ref.getDownloadURL();
     }
 
+    // Upload da ficha técnica.
     if (arquivoFicha) {
-      const ref = storage.ref().child("documentos_produtos/" + idFinal + "/ficha_tecnica_" + sanitizarNomeArquivo(arquivoFicha.name));
-      const snap = await ref.put(arquivoFicha);
-      dados.fichaTecnicaUrl = await snap.ref.getDownloadURL();
+      if (typeof storage === "undefined" || !storage) {
+        throw new Error("Firebase Storage não está disponível. Verifique a configuração do Firebase.");
+      }
+      const refFicha = storage.ref().child(
+        "documentos_produtos/" + idFinal + "/ficha_tecnica_" + sanitizarNomeArquivo(arquivoFicha.name)
+      );
+      const snapFicha = await refFicha.put(arquivoFicha);
+      dados.fichaTecnicaUrl = await snapFicha.ref.getDownloadURL();
     }
 
-    if (arquivoRotulo || arquivoFicha) {
-      await db.collection(COLECAO).doc(idFinal).set(dados, {merge:true});
-    }
+    // Atualiza os links dos arquivos no mesmo documento.
+    await docRef.set(dados, { merge: true });
 
     fecharModalProduto();
+    alert("Produto salvo com sucesso.");
   } catch (err) {
-    alert("Erro ao salvar produto ou enviar os arquivos: " + err.message);
+    console.error("Erro ao salvar produto:", err);
+    alert("Não foi possível salvar o produto.\n\n" + (err && err.message ? err.message : err));
+  } finally {
+    btnSalvar.disabled = false;
+    btnSalvar.textContent = textoOriginal;
   }
 });
 
