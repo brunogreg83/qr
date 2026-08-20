@@ -894,6 +894,14 @@ function carregarPlacaPublica(id){
           (p.diluicao ? '<div class="bloco-diluicao"><span class="rotulo">Diluição recomendada</span><span class="valor">' + escapeHtml(p.diluicao) + '</span></div>' : '') +
           '<div class="titulo-secao">Modo de uso</div>' +
           '<ul class="lista-passos">' + passosHtml + '</ul>' +
+          '<div class="documentos-produto">' +
+            (p.rotuloUrl
+              ? '<a class="btn-documento" href="' + escapeAttr(p.rotuloUrl) + '" target="_blank" rel="noopener">Baixar rótulo</a>'
+              : '') +
+            (p.fichaTecnicaUrl
+              ? '<a class="btn-documento secundario" href="' + escapeAttr(p.fichaTecnicaUrl) + '" target="_blank" rel="noopener">Baixar ficha técnica</a>'
+              : '') +
+          '</div>' +
           (p.cuidados ? '<div class="bloco-cuidados"><div class="titulo-secao">Cuidados e EPI</div>' + escapeHtml(p.cuidados) + '</div>' : '') +
         '</div>' +
         '<div class="placa-rodape">AB Chemicals · (43) 98871-2001</div>' +
