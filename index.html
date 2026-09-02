@@ -229,6 +229,12 @@ main.conteudo{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
   padding:14px 16px;font-size:13.5px;line-height:1.5;color:#6B4A0E;
 }
 .bloco-cuidados .titulo-secao{color:#8A5A0E;border-bottom-color:#F2DDB0;}
+.mensagem-epi{
+  margin-top:22px;padding:14px 16px;text-align:center;
+  background:var(--amarelo-seg);color:var(--azul-950);
+  font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;border-radius:var(--radius);
+}
 .placa-rodape{
   text-align:center;padding:16px;font-family:'JetBrains Mono',monospace;font-size:10.5px;
   color:#8A99A1;letter-spacing:.06em;text-transform:uppercase;
@@ -903,6 +909,7 @@ function carregarPlacaPublica(id){
               : '') +
           '</div>' +
           (p.cuidados ? '<div class="bloco-cuidados"><div class="titulo-secao">Cuidados e EPI</div>' + escapeHtml(p.cuidados) + '</div>' : '') +
+          '<div class="mensagem-epi">USAR EPI</div>' +
         '</div>' +
         '<div class="placa-rodape">Synthera · (43) 98871-2001</div>' +
       '</div>';
